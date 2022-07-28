@@ -16,21 +16,21 @@ namespace Avatar.Player.Movement
 
         [Header("Movement")]
         public float groundedMovementModifier;
+
         public float aerialMovementModifier;
 
         public ForceMode2D movementForceMode;
 
         [Header("Jumping")]
         public float initialJumpForceModifier;
-        public float secondaryJumpForceModifier;
-        public float secondaryJumpModifierDecayRate;
+
         public ForceMode2D initialJumpForceMode;
-        public ForceMode2D secondaryJumpForceMode;
 
         [Header("Drag")]
         [Range(0, 10)]
         public float aerialDragModifier;
-        [Range(0,10)]
+
+        [Range(0, 10)]
         public float groundedDragModifier;
 
         [Header("Falling Modifications")]
@@ -56,16 +56,18 @@ namespace Avatar.Player.Movement
 
         private void HandleMovement()
         {
-            if (_movementDirection is < 0.1f and > -0.1f ) return;
+            if (_movementDirection is < 0.1f and > -0.1f) return;
             if (Math.Abs(rigidbodyToMove.velocity.x) > maxVerticalVelocity &&
                 Math.Sign(_movementDirection) == Math.Sign(rigidbodyToMove.velocity.x)) return;
             if (groundCheck.IsGrounded)
             {
-                rigidbodyToMove.AddForce(new Vector2(_movementDirection * groundedMovementModifier, 0), movementForceMode);
+                rigidbodyToMove.AddForce(new Vector2(_movementDirection * groundedMovementModifier, 0),
+                    movementForceMode);
             }
             else
             {
-                rigidbodyToMove.AddForce(new Vector2(_movementDirection * aerialMovementModifier, 0), movementForceMode);
+                rigidbodyToMove.AddForce(new Vector2(_movementDirection * aerialMovementModifier, 0),
+                    movementForceMode);
             }
         }
 
@@ -79,7 +81,8 @@ namespace Avatar.Player.Movement
 
         private void HandleFallModification()
         {
-            if (!groundCheck.IsGrounded && (!_jumpInput || rigidbodyToMove.velocity.y < 0))
+            if (!groundCheck.IsGrounded && (!_jumpInput || rigidbodyToMove.velocity.y < 0) &&
+                rigidbodyToMove.velocity.y < maxFallingVelocityForceApplicationThreshold)
             {
                 rigidbodyToMove.AddForce(Vector2.down * fallModifier);
             }
@@ -110,15 +113,6 @@ namespace Avatar.Player.Movement
         {
             yield return _waitForFixedUpdate;
             rigidbodyToMove.AddForce(Vector2.up * initialJumpForceModifier, initialJumpForceMode);
-            yield return _waitForFixedUpdate;
-            var additionalJumpForce = secondaryJumpForceModifier;
-            while (_jumpInput && additionalJumpForce > 0)
-            {
-                rigidbodyToMove.AddForce(Vector2.up * additionalJumpForce, secondaryJumpForceMode);
-                additionalJumpForce -= secondaryJumpModifierDecayRate * Time.deltaTime;
-                yield return _waitForFixedUpdate;
-            }
-
             _jumpCoroutine = null;
         }
     }
